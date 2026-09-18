@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'test/browser',workers:1,timeout:60000,use:{baseURL:process.env.BACKOFFICE_URL||'http://localhost:5173',headless:true,viewport:{width:1440,height:960},screenshot:'only-on-failure',trace:'retain-on-failure'},webServer:process.env.BACKOFFICE_URL?undefined:{command:'node node_modules/vite/bin/vite.js --host 127.0.0.1',url:'http://localhost:5173',reuseExistingServer:!process.env.CI},reporter:'list'});

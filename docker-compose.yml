@@ -1,0 +1,12 @@
+name: khiarukum-backoffice
+services:
+  backoffice:
+    image: ${BACKOFFICE_IMAGE:-khiarukum-backoffice:local}
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5173}:80"
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:8000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -1,0 +1,10 @@
+node_modules
+.yarn-cache*
+.git
+.env*
+dist
+test-results
+playwright-report
+*.log
+test
+docs
