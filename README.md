@@ -1,10 +1,10 @@
 # Khiarukum backoffice
 
-React + Vite administration app. Arabic is the default, with English and RTL/LTR switching. The legacy logos, blue sidebar (`#3754DB`), primary blue (`#0062FF`), white cards and existing management routes are retained.
+React + Vite administration app. Arabic is the default, with English and RTL/LTR switching. Uses the Khiarukum logo and a teal, gold and ivory theme.
 
 ## Development
 
-Use Node 24 LTS and Yarn 1.22.22. Copy `.env.example` to `.env`, install with `yarn install --frozen-lockfile`, then run `yarn dev`. Open `http://localhost:5173`. The backend must be healthy on port 8000 with `http://localhost:5173` in `ALLOWED_ORIGINS`. Sign in using the bootstrap administrator configured in `backend/.env`; no credentials are embedded in the web bundle.
+Use Node 24 LTS and Yarn 1.22.22. Copy `.env.example` to `.env`, install with `yarn install --frozen-lockfile`, then run `yarn dev`. Open `http://localhost:5173`. The backend must be healthy on port 18000 with `http://localhost:5173` in `ALLOWED_ORIGINS`. Sign in using the bootstrap administrator configured in `backend/.env`; no credentials are embedded in the web bundle.
 
 `API_PROXY_TARGET` configures the development proxy. Browser requests use `/api/v1` and HttpOnly cookies. The client shares one in-flight refresh request, retries a request once, and returns to login after session expiry. Tokens are never stored in browser localStorage; only the language preference is persisted.
 
@@ -32,9 +32,19 @@ Group forms retain teacher/auditor assignments, teaching language, meeting metad
 
 Canonical reference data must be configured in the backend. Empty catalogs remain empty instead of displaying fabricated options. Only Arabic and English content fields are available. Program completion duration is explicitly in months, matching the new API.
 
-## Production container
+## Vercel production deployment
 
-Run `docker compose up -d --build --wait`. This Compose project contains exactly one `backoffice` service. Nginx serves static assets, supports direct-link SPA navigation and proxies `/api/` to `API_UPSTREAM` (default `http://host.docker.internal:8000`). It can reach the separate backend project through the host on Docker Desktop and Linux host-gateway. Set a suitable upstream when deploying elsewhere.
+Import the backoffice repository into Vercel and name the project `khiarukum-bo`. For the separate repository use the repository root; if importing the full workspace, select `backoffice` as the Root Directory. Use the Vite preset, `yarn build`, output `dist`, and Node.js 24. Set `VITE_API_URL=/api/v1` (or leave it unset). The production origin is `https://khiarukum-bo.vercel.app`.
+
+`vercel.json` proxies `/api/:path*` to `http://167.233.215.238:18000/api/:path*`, disables API caching, and provides React Router deep-link fallback. Browsers keep calling the HTTPS Vercel origin, so existing host-only HttpOnly, Secure, SameSite=Lax cookies can be used. Keep the exact Vercel origin in backend `ALLOWED_ORIGINS`. Preview domains are not automatically allowed.
+
+The VPS upstream currently uses HTTP: this proxy does not encrypt traffic between Vercel and the VPS. Before using real credentials, configure HTTPS on the backend and update the rewrite destination. Media URLs also need a reachable HTTPS `MINIO_PUBLIC_ENDPOINT`. See the backend `docs/VPS_VERCEL.md` deployment guide. No Docker container is needed for the backoffice on the VPS.
+
+Vercel routing reference: https://vercel.com/docs/routing/rewrites
+
+## Optional local container
+
+Run `docker compose up -d --build --wait`. This Compose project contains exactly one `backoffice` service. Nginx serves static assets, supports direct-link SPA navigation and proxies `/api/` to `API_UPSTREAM` (default `http://host.docker.internal:18000`). It can reach the separate backend project through the host on Docker Desktop and Linux host-gateway. Set a suitable upstream when deploying elsewhere.
 
 `WEB_PORT` defaults to 5173. Keep the public origin in backend `ALLOWED_ORIGINS`. Production HTTPS and secure cookies are configured with the backend and ingress when hosting is available. `API_UPSTREAM` is runtime configuration; `VITE_API_URL` is build-time public configuration and must never contain secrets.
 

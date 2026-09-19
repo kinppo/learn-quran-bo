@@ -11,7 +11,7 @@ test('real backend: admin login, bilingual CRUD, schedule edits, student filters
     'Requires the local backend and explicit integration opt-in',
   );
   const env = parseEnv(fs.readFileSync('../backend/.env', 'utf8'));
-  const api = 'http://127.0.0.1:8000/api/v1';
+  const api = 'http://127.0.0.1:18000/api/v1';
   const login = await request.post(api + '/auth/login', {
     data: {
       identifier: env.ADMIN_EMAIL,
