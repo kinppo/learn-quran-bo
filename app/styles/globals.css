@@ -578,3 +578,80 @@ dialog::backdrop {
 html[lang='ar'] body {
   font-family: KhiarukumArabic, Arial, sans-serif;
 }
+
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.dashboard-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--color-lightBorder);
+}
+.dashboard-metric:hover {
+  border-color: var(--color-primary);
+}
+.dashboard-metric strong {
+  font-size: 34px;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+.dashboard-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.dashboard-panel {
+  min-width: 0;
+}
+.dashboard-panel h2 {
+  margin: 0;
+}
+.dashboard-panel .page-title {
+  margin-bottom: 12px;
+}
+.dashboard-students {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.dashboard-students a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--color-lightBorder);
+}
+.dashboard-students a:hover strong {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.dashboard-students strong {
+  overflow-wrap: anywhere;
+}
+.dashboard-students small {
+  display: block;
+  margin-top: 7px;
+}
+.dashboard-students .badge {
+  flex-shrink: 0;
+}
+@media (max-width: 1000px) {
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-columns {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 420px) {
+  .dashboard-metrics {
+    gap: 12px;
+  }
+  .dashboard-metric {
+    padding: 16px;
+  }
+}
