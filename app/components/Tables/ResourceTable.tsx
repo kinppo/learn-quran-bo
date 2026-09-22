@@ -10,7 +10,14 @@ import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useLanguage, useTranslations } from '@/i18n';
 import { resources, type ResourceKey } from '@/constants/resources';
-import { localized, recordId } from '@/utils';
+import {
+  localized,
+  recordId,
+  activeMemberships,
+  sortByRecentProgram,
+  distinctPrograms,
+} from '@/utils';
+import DisplayDropdown from '@/components/Dropdown/DisplayDropdown';
 import type { RecordData } from '@/types';
 import Button from '@/components/Buttons/Button';
 export function cellValue(
@@ -24,7 +31,12 @@ export function cellValue(
       ? `${locale === 'en' ? user.firstNameEn || user.firstName : user.firstName} ${locale === 'en' ? user.lastNameEn || user.lastName : user.lastName}`
       : localized(row, locale);
   if (key === 'description') return localized(row, locale, 'description');
-  if (key === 'programId') return localized(row.program, locale);
+  if (key === 'programId')
+    return row.memberships
+      ? distinctPrograms(activeMemberships(row.memberships))
+          .map((p: RecordData) => localized(p, locale))
+          .join(' / ') || localized(row.program, locale)
+      : localized(row.program, locale);
   if (key === 'riwayaId') return localized(row.riwaya, locale);
   if (key === 'occupied') return row._count?.students ?? 0;
   if (key === 'createdAt') return dayjs(user.createdAt).format('YYYY-MM-DD');
@@ -92,6 +104,18 @@ export default function ResourceTable({
                 {String(value)}
               </Link>
             );
+          if (key === 'programId' && row.original.memberships) {
+            const programs = distinctPrograms(
+              activeMemberships(row.original.memberships),
+            );
+            if (programs.length > 1)
+              return (
+                <DisplayDropdown
+                  label={t('viewPrograms')}
+                  items={programs.map((p: RecordData) => localized(p, locale))}
+                />
+              );
+          }
           return String(value);
         },
       })),
