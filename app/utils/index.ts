@@ -27,3 +27,25 @@ export function downloadCsv(name: string, rows: unknown[][]) {
   a.click();
   URL.revokeObjectURL(url);
 }
+export const activeMemberships = (
+  memberships: RecordData[] = [],
+): RecordData[] => memberships.filter((m) => m.active);
+export function sortByRecentProgram(memberships: RecordData[]): RecordData[] {
+  return [...memberships].sort((a, b) => {
+    const ap = a.group?.program?.createdAt;
+    const bp = b.group?.program?.createdAt;
+    if (ap && bp) return new Date(bp).getTime() - new Date(ap).getTime();
+    if (ap) return -1;
+    if (bp) return 1;
+    return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+  });
+}
+export function distinctPrograms(memberships: RecordData[]): RecordData[] {
+  return Array.from(
+    new Map(
+      memberships
+        .filter((m) => m.group?.program)
+        .map((m) => [m.group.program.id, m.group.program]),
+    ).values(),
+  );
+}

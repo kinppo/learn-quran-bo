@@ -189,6 +189,7 @@ export const messages = {
     profile: 'Personal information',
     notAvailable: 'Not available',
     occupied: 'Enrolled students',
+    viewPrograms: 'View programs',
   },
   ar: {
     dashboardOverview: 'نظرة عامة على الإدارة',
@@ -377,5 +378,6 @@ export const messages = {
     profile: 'المعلومات الشخصية',
     notAvailable: 'غير متاح',
     occupied: 'الطلاب المسجلون',
+    viewPrograms: 'عرض البرامج',
   },
 };
