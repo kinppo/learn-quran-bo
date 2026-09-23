@@ -130,12 +130,12 @@ export default function ResourceTable({
             >
               {t('edit')}
             </Link>
-            <Button
-              variant='ghost'
-              onClick={() => onDelete([recordId(row.original)])}
-            >
-              {t('delete')}
-            </Button>
+            {/* <Button */}
+            {/*   variant='ghost' */}
+            {/*   onClick={() => onDelete([recordId(row.original)])} */}
+            {/* > */}
+            {/*   {t('delete')} */}
+            {/* </Button> */}
           </div>
         ),
       },
