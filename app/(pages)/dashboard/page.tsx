@@ -50,7 +50,9 @@ function StudentPanel({
   const { locale } = useLanguage();
   const [retry, setRetry] = useState(0);
   const { response, loading, error } = useRequest<RecordData[]>(
-    `/students?limit=5&page=1&orderBy=createdAt&order=${waiting ? 'asc&status=WAITING' : 'desc'}`,
+    waiting
+      ? '/admin/waiting-list?limit=5&page=1&order=asc&status=PENDING'
+      : '/students?limit=5&page=1&orderBy=createdAt&order=desc',
     revision + retry,
   );
   return (
@@ -60,9 +62,7 @@ function StudentPanel({
         <Link
           className='row-link'
           to={
-            waiting
-              ? '/students?status=WAITING&orderBy=createdAt&order=asc'
-              : '/students?orderBy=createdAt&order=desc'
+            waiting ? '/waiting-list' : '/students?orderBy=createdAt&order=desc'
           }
         >
           {t('dashboardViewAll')}
@@ -98,15 +98,29 @@ function StudentPanel({
             <ul className='dashboard-students'>
               {response.data.map((row) => (
                 <li key={recordId(row)}>
-                  <Link to={`/edit-student/${recordId(row)}`}>
+                  <Link
+                    to={
+                      waiting
+                        ? '/waiting-list'
+                        : `/edit-student/${recordId(row)}`
+                    }
+                  >
                     <span>
-                      <strong>{cellValue(row, 'name', locale)}</strong>
+                      <strong>
+                        {cellValue(waiting ? row.student : row, 'name', locale)}
+                      </strong>
                       <small className='muted'>
                         {t('createdAt')}: {cellValue(row, 'createdAt', locale)}
                       </small>
                     </span>
-                    <span className={`badge ${row.user?.status || row.status}`}>
-                      {t(row.user?.status || row.status || 'notAvailable')}
+                    <span
+                      className={`badge ${waiting ? row.status : row.user?.status || row.status}`}
+                    >
+                      {t(
+                        waiting
+                          ? row.status
+                          : row.user?.status || row.status || 'notAvailable',
+                      )}
                     </span>
                   </Link>
                 </li>

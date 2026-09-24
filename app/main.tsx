@@ -11,6 +11,9 @@ import { resources, type ResourceKey } from '@/constants/resources';
 import '@/styles/globals.css';
 const pages: Record<string, ComponentType> = {
   students: lazy(() => import('@/(pages)/students/page')),
+  'waiting-list': lazy(() => import('@/(pages)/waiting-list/page')),
+  support: lazy(() => import('@/(pages)/support/page')),
+  'support/detail': lazy(() => import('@/(pages)/support/detail/page')),
   'students/edit': lazy(() => import('@/(pages)/students/edit/page')),
   teachers: lazy(() => import('@/(pages)/teachers/page')),
   'teachers/add': lazy(() => import('@/(pages)/teachers/add/page')),
@@ -55,6 +58,15 @@ function App() {
             <Route element={<DefaultLayout />}>
               <Route index element={<Dashboard />} />
               <Route path='/dashboard' element={<Dashboard />} />
+              <Route
+                path='/waiting-list'
+                element={<Page path='waiting-list' />}
+              />
+              <Route path='/support' element={<Page path='support' />} />
+              <Route
+                path='/support/:id'
+                element={<Page path='support/detail' />}
+              />
               {(Object.keys(resources) as ResourceKey[]).map((key) => (
                 <Route key={key}>
                   <Route

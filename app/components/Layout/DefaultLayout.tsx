@@ -10,6 +10,8 @@ import {
   FiGrid,
   FiLogOut,
   FiMenu,
+  FiClock,
+  FiHelpCircle,
 } from 'react-icons/fi';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useTranslations } from '@/i18n';
@@ -28,11 +30,13 @@ export default function DefaultLayout() {
   const links = [
     ['dashboard', '/', FiHome],
     ['students', '/students', FiUsers],
+    ['waitingList', '/waiting-list', FiClock],
     ['teachers', '/teachers', FiUser],
     ['groups', '/groups', FiBookOpen],
     ['programs', '/programs', FiLayers],
     ['riwayat', '/riwayat', FiFlag],
     ['categories', '/categories', FiGrid],
+    ['support', '/support', FiHelpCircle],
   ] as const;
   return (
     <div className='layout'>
@@ -40,11 +44,7 @@ export default function DefaultLayout() {
         {t('administration')}
       </a>
       <aside className={open ? 'sidebar open' : 'sidebar'}>
-        <img
-          className='sidebar-logo'
-          src='/images/icon.png'
-          alt={t('brand')}
-        />
+        <img className='sidebar-logo' src='/images/icon.png' alt={t('brand')} />
         <nav>
           {links.map(([label, path, Icon]) => (
             <NavLink
