@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import Button from '@/components/Buttons/Button';
 import Loading from '@/components/Loaders/Loading';
@@ -9,6 +9,62 @@ import { localized } from '@/utils';
 import { errorKey } from '@/utils/errors';
 import type { RecordData } from '@/types';
 
+function DeclineDialog({
+  reason,
+  error,
+  busy,
+  onReasonChange,
+  onSubmit,
+  onClose,
+}: {
+  reason: string;
+  error: string;
+  busy: boolean;
+  onReasonChange: (reason: string) => void;
+  onSubmit: () => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const t = useTranslations();
+
+  useEffect(() => {
+    ref.current?.showModal();
+  }, []);
+
+  return (
+    <dialog
+      ref={ref}
+      className='decline-dialog'
+      aria-labelledby='decline-title'
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!busy) onClose();
+      }}
+    >
+      <h2 id='decline-title'>{t('reject')}</h2>
+      <div className='field'>
+        <textarea
+          autoFocus
+          aria-label={t('rejectionReason')}
+          placeholder={t('rejectionReason')}
+          value={reason}
+          onChange={(event) => onReasonChange(event.target.value)}
+          rows={5}
+        />
+      </div>
+      {error && <p className='error'>{t(error)}</p>}
+      <div className='actions'>
+        <Button variant='outline' disabled={busy} onClick={onClose}>
+          {t('cancel')}
+        </Button>
+        <Button variant='destructive' isLoading={busy} onClick={onSubmit}>
+          {t('decline')}
+        </Button>
+      </div>
+    </dialog>
+  );
+}
+
 export default function WaitingListPage() {
   const t = useTranslations();
   const { locale } = useLanguage();
@@ -17,7 +73,9 @@ export default function WaitingListPage() {
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
   const [groups, setGroups] = useState<Record<string, string>>({});
-  const [reasons, setReasons] = useState<Record<string, string>>({});
+  const [declineId, setDeclineId] = useState('');
+  const [declineReason, setDeclineReason] = useState('');
+  const [declineError, setDeclineError] = useState('');
   const requests = useRequest<RecordData[]>(
     `/admin/waiting-list?limit=100&page=1&order=asc${status ? `&status=${status}` : ''}`,
     revision,
@@ -45,24 +103,35 @@ export default function WaitingListPage() {
     [rows, availableGroups.response?.data],
   );
 
-  async function review(id: string, action: 'approve' | 'reject') {
+  async function review(
+    id: string,
+    action: 'approve' | 'reject',
+    rejectionReason?: string,
+  ) {
     const groupId = groups[id];
-    const reason = reasons[id]?.trim();
+    const reason = rejectionReason?.trim();
     if ((action === 'approve' && !groupId) || (action === 'reject' && !reason))
-      return setNotice(
-        action === 'approve' ? 'selectMatchingGroup' : 'reasonRequired',
-      );
+      return action === 'approve'
+        ? setNotice('selectMatchingGroup')
+        : setDeclineError('reasonRequired');
     setBusy(id);
     setNotice('');
+    setDeclineError('');
     try {
       await PATCH(
         `/admin/waiting-list/${id}/${action}`,
         action === 'approve' ? { groupId } : { reason },
       );
       setNotice('saved');
+      if (action === 'reject') {
+        setDeclineId('');
+        setDeclineReason('');
+      }
       setRevision((value) => value + 1);
     } catch (error) {
-      setNotice(errorKey(error));
+      const key = errorKey(error);
+      if (action === 'reject') setDeclineError(key);
+      else setNotice(key);
     } finally {
       setBusy('');
     }
@@ -165,21 +234,14 @@ export default function WaitingListPage() {
                             >
                               {t('approve')}
                             </Button>
-                            <input
-                              aria-label={t('rejectionReason')}
-                              placeholder={t('rejectionReason')}
-                              value={reasons[request.id] || ''}
-                              onChange={(event) =>
-                                setReasons((value) => ({
-                                  ...value,
-                                  [request.id]: event.target.value,
-                                }))
-                              }
-                            />
                             <Button
                               variant='destructive'
                               isLoading={busy === request.id}
-                              onClick={() => void review(request.id, 'reject')}
+                              onClick={() => {
+                                setDeclineId(request.id);
+                                setDeclineReason('');
+                                setDeclineError('');
+                              }}
                             >
                               {t('reject')}
                             </Button>
@@ -197,6 +259,20 @@ export default function WaitingListPage() {
           </div>
         )}
       </section>
+      {declineId && (
+        <DeclineDialog
+          reason={declineReason}
+          error={declineError}
+          busy={busy === declineId}
+          onReasonChange={setDeclineReason}
+          onSubmit={() => void review(declineId, 'reject', declineReason)}
+          onClose={() => {
+            setDeclineId('');
+            setDeclineReason('');
+            setDeclineError('');
+          }}
+        />
+      )}
     </>
   );
 }

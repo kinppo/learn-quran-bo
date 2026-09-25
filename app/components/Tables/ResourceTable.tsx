@@ -14,12 +14,10 @@ import {
   localized,
   recordId,
   activeMemberships,
-  sortByRecentProgram,
   distinctPrograms,
 } from '@/utils';
 import DisplayDropdown from '@/components/Dropdown/DisplayDropdown';
 import type { RecordData } from '@/types';
-import Button from '@/components/Buttons/Button';
 export function cellValue(
   row: RecordData,
   key: string,
@@ -48,7 +46,7 @@ export default function ResourceTable({
   rows,
   selection,
   setSelection,
-  onDelete,
+  onDelete: _onDelete,
 }: {
   resource: ResourceKey;
   rows: RecordData[];
@@ -99,7 +97,11 @@ export default function ResourceTable({
             return (
               <Link
                 className='row-link'
-                to={`/edit-${config.singular}/${recordId(row.original)}`}
+                to={
+                  resource === 'students'
+                    ? `/students/${recordId(row.original)}`
+                    : `/edit-${config.singular}/${recordId(row.original)}`
+                }
               >
                 {String(value)}
               </Link>
@@ -134,9 +136,13 @@ export default function ResourceTable({
             )}
             <Link
               className='button button-outline'
-              to={`/edit-${config.singular}/${recordId(row.original)}`}
+              to={
+                resource === 'students'
+                  ? `/students/${recordId(row.original)}`
+                  : `/edit-${config.singular}/${recordId(row.original)}`
+              }
             >
-              {t('edit')}
+              {t(resource === 'students' ? 'view' : 'edit')}
             </Link>
             {/* <Button */}
             {/*   variant='ghost' */}
@@ -148,7 +154,7 @@ export default function ResourceTable({
         ),
       },
     ],
-    [config, locale, t, onDelete],
+    [config, locale, resource, t],
   );
   const table = useReactTable({
     data: rows,

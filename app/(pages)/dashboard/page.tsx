@@ -100,9 +100,7 @@ function StudentPanel({
                 <li key={recordId(row)}>
                   <Link
                     to={
-                      waiting
-                        ? '/waiting-list'
-                        : `/edit-student/${recordId(row)}`
+                      waiting ? '/waiting-list' : `/students/${recordId(row)}`
                     }
                   >
                     <span>
