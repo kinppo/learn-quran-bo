@@ -4,7 +4,10 @@ export interface User {
   role: string;
   firstName: string;
   lastName: string;
+  username: string;
   email: string;
+  phoneNumber?: string | null;
+  avatarId?: string | null;
   locale: Locale;
 }
 export interface ApiResponse<T> {

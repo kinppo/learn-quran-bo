@@ -13,15 +13,21 @@ const AdminContext = createContext<{
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  reloadAdmin: () => Promise<void>;
 }>({
   admin: null,
   loading: true,
   login: async () => {},
   logout: async () => {},
+  reloadAdmin: async () => {},
 });
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [admin, setAdmin] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const reloadAdmin = useCallback(async () => {
+    const response = await GET<User>('/auth/me');
+    setAdmin(response.data.role === 'ADMIN' ? response.data : null);
+  }, []);
   useEffect(() => {
     let active = true;
     const clear = () => setAdmin(null);
@@ -52,7 +58,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setAdmin(null);
   }, []);
   return (
-    <AdminContext.Provider value={{ admin, loading, login, logout }}>
+    <AdminContext.Provider
+      value={{ admin, loading, login, logout, reloadAdmin }}
+    >
       {children}
     </AdminContext.Provider>
   );

@@ -159,6 +159,7 @@ export default function Dashboard() {
         <div className='actions'>
           {[
             ['/add-teacher', 'dashboardAddTeacher'],
+            ['/add-auditor', 'dashboardAddAuditor'],
             ['/add-group', 'dashboardAddGroup'],
             ['/add-program', 'dashboardAddProgram'],
             ['/students', 'dashboardManageStudents'],

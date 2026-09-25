@@ -124,6 +124,14 @@ export default function ResourceTable({
         header: t('actions'),
         cell: ({ row }) => (
           <div className='actions'>
+            {resource === 'groups' && (
+              <Link
+                className='button button-outline'
+                to={`/groups/${recordId(row.original)}/messages`}
+              >
+                {t('messages')}
+              </Link>
+            )}
             <Link
               className='button button-outline'
               to={`/edit-${config.singular}/${recordId(row.original)}`}
