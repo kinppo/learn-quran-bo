@@ -64,6 +64,27 @@ test('blocks invalid age bounds and zero cadence', () => {
     }).success,
   ).toBe(false);
 });
+test('validates auditor create and edit forms', () => {
+  const auditor = {
+    ...resources.auditors.defaults,
+    firstName: 'Audit',
+    lastName: 'User',
+    email: 'auditor@example.com',
+    username: 'auditor1',
+    password: 'password123',
+  };
+  expect(resources.auditors.schema(false).safeParse(auditor).success).toBe(
+    true,
+  );
+  expect(
+    resources.auditors.schema(false).safeParse({ ...auditor, password: '' })
+      .success,
+  ).toBe(false);
+  expect(
+    resources.auditors.schema(true).safeParse({ ...auditor, password: '' })
+      .success,
+  ).toBe(true);
+});
 test('CSV quotes delimiters and neutralizes formula injection', () => {
   expect(csvCell('=1+1')).toBe('"\'=1+1"');
   expect(csvCell('a,"b"')).toBe('"a,""b"""');

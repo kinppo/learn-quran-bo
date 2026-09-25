@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import type { RecordData } from '@/types';
 export type ResourceKey =
-  'students' | 'teachers' | 'groups' | 'programs' | 'categories' | 'riwayat';
+  | 'students'
+  | 'teachers'
+  | 'auditors'
+  | 'groups'
+  | 'programs'
+  | 'categories'
+  | 'riwayat';
 export interface Field {
   name: string;
   type?: string;
@@ -219,6 +225,26 @@ export const resources: Record<ResourceKey, Resource> = {
         registrationNumber: z.string().max(100).optional(),
         languageCodes: z.array(z.enum(['ar', 'en'])),
         riwayaIds: z.array(uuid),
+        description: text,
+      }),
+  },
+  auditors: {
+    singular: 'auditor',
+    route: '/auditors',
+    fields: [
+      ...profileFields,
+      { name: 'registrationNumber' },
+      { name: 'description', type: 'textarea' },
+    ],
+    columns: ['name', 'email', 'phoneNumber', 'status'],
+    defaults: {
+      ...personDefaults,
+      registrationNumber: '',
+      description: '',
+    },
+    schema: (edit) =>
+      profileSchema(edit).extend({
+        registrationNumber: z.string().max(100).optional(),
         description: text,
       }),
   },

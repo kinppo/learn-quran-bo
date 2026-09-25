@@ -18,7 +18,11 @@ const pages: Record<string, ComponentType> = {
   teachers: lazy(() => import('@/(pages)/teachers/page')),
   'teachers/add': lazy(() => import('@/(pages)/teachers/add/page')),
   'teachers/edit': lazy(() => import('@/(pages)/teachers/edit/page')),
+  auditors: lazy(() => import('@/(pages)/auditors/page')),
+  'auditors/add': lazy(() => import('@/(pages)/auditors/add/page')),
+  'auditors/edit': lazy(() => import('@/(pages)/auditors/edit/page')),
   groups: lazy(() => import('@/(pages)/groups/page')),
+  'groups/messages': lazy(() => import('@/(pages)/groups/messages/page')),
   'groups/add': lazy(() => import('@/(pages)/groups/add/page')),
   'groups/edit': lazy(() => import('@/(pages)/groups/edit/page')),
   programs: lazy(() => import('@/(pages)/programs/page')),
@@ -30,6 +34,7 @@ const pages: Record<string, ComponentType> = {
   riwayat: lazy(() => import('@/(pages)/riwayat/page')),
   'riwayat/add': lazy(() => import('@/(pages)/riwayat/add/page')),
   'riwayat/edit': lazy(() => import('@/(pages)/riwayat/edit/page')),
+  profile: lazy(() => import('@/(pages)/profile/page')),
 };
 function Page({ path }: { path: string }) {
   const Component = pages[path];
@@ -63,6 +68,11 @@ function App() {
                 element={<Page path='waiting-list' />}
               />
               <Route path='/support' element={<Page path='support' />} />
+              <Route path='/profile' element={<Page path='profile' />} />
+              <Route
+                path='/groups/:id/messages'
+                element={<Page path='groups/messages' />}
+              />
               <Route
                 path='/support/:id'
                 element={<Page path='support/detail' />}

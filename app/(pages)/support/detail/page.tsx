@@ -9,6 +9,19 @@ import { useLanguage, useTranslations } from '@/i18n';
 import { errorKey } from '@/utils/errors';
 import type { RecordData } from '@/types';
 
+function requesterRoleKey(role?: string) {
+  switch (role) {
+    case 'STUDENT':
+      return 'student' as const;
+    case 'TEACHER':
+      return 'teacher' as const;
+    case 'AUDITOR':
+      return 'auditor' as const;
+    default:
+      return null;
+  }
+}
+
 export default function SupportDetailPage() {
   const t = useTranslations();
   const { locale } = useLanguage();
@@ -25,6 +38,7 @@ export default function SupportDetailPage() {
   }>(`/support/tickets/${id}?limit=100&page=1`, revision);
   const ticket = request.response?.data.ticket;
   const messages = [...(request.response?.data.messages || [])].reverse();
+  const ownerRoleKey = requesterRoleKey(ticket?.owner?.role);
 
   async function reply(event: FormEvent) {
     event.preventDefault();
@@ -86,6 +100,7 @@ export default function SupportDetailPage() {
         <p className='muted'>
           {t('supportOwner')}: {ticket.owner?.firstName}{' '}
           {ticket.owner?.lastName}
+          {ownerRoleKey ? ` · ${t(ownerRoleKey)}` : ''}
         </p>
         <h2>{t('supportConversation')}</h2>
         {!messages.length ? (
@@ -104,6 +119,9 @@ export default function SupportDetailPage() {
                 <div className='support-message-meta'>
                   <strong>
                     {message.author?.firstName} {message.author?.lastName}
+                    {requesterRoleKey(message.author?.role)
+                      ? ` · ${t(requesterRoleKey(message.author?.role)!)}`
+                      : ''}
                   </strong>
                   <time>
                     {dayjs(message.createdAt).format('YYYY-MM-DD HH:mm')}
