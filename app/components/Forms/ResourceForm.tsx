@@ -11,12 +11,7 @@ import {
 import { useLanguage, useTranslations } from '@/i18n';
 import { allRecords, GET, POST, PATCH, POST_FILE } from '@/lib/crud';
 import type { RecordData, Option } from '@/types';
-import {
-  activeMemberships,
-  localized,
-  recordId,
-  sortByRecentProgram,
-} from '@/utils';
+import { localized, recordId } from '@/utils';
 import { errorKey } from '@/utils/errors';
 import Input from '@/components/Inputs/Input';
 import Button from '@/components/Buttons/Button';
@@ -33,9 +28,6 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
   const [error, setError] = useState('');
   const [revision, setRevision] = useState(0);
   const [lookups, setLookups] = useState<Record<string, RecordData[]>>({});
-  const [record, setRecord] = useState<RecordData>();
-  const [stats, setStats] = useState<RecordData>();
-  const [monthlyStats, setMonthlyStats] = useState<RecordData>();
   const [photo, setPhoto] = useState<File>();
   const [photoUrl, setPhotoUrl] = useState('');
   const { control, handleSubmit, reset, formState } = useForm<RecordData>({
@@ -68,31 +60,7 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
         if (!active) return;
         setLookups(Object.fromEntries(lists));
         if (result) {
-          setRecord(result.data);
           reset(formValues(resource, result.data));
-          if (resource === 'students') {
-            try {
-              const k = await GET('/kpi?studentId=' + id);
-              if (active) setStats(k.data);
-              const now = new Date();
-              const from = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                1,
-              ).toISOString();
-              const month = await GET(
-                '/kpi?' +
-                  new URLSearchParams({
-                    studentId: id!,
-                    from,
-                    to: now.toISOString(),
-                  }),
-              );
-              if (active) setMonthlyStats(month.data);
-            } catch {
-              if (active) setStats(undefined);
-            }
-          }
           if (result.data.user?.avatarId) {
             try {
               const image = await GET(
@@ -165,24 +133,13 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
           avatarId: uploaded.data.id,
         });
       }
-      nav('/' + resource);
+      nav(resource === 'students' && id ? `/students/${id}` : '/' + resource);
     } catch (e) {
       if (!id && savedId)
         nav(`/edit-${config.singular}/${savedId}`, { replace: true });
       setError(errorKey(e));
     }
   }
-  const [selectedGroupId, setSelectedGroupId] = useState('');
-  useEffect(() => {
-    const active = record ? activeMemberships(record.memberships) : [];
-    setSelectedGroupId(
-      active.length ? sortByRecentProgram(active)[0].groupId : '',
-    );
-  }, [record]);
-  const groupOptions = record ? activeMemberships(record.memberships) : [];
-  const selectedMembership = groupOptions.find(
-    (m: RecordData) => m.groupId === selectedGroupId,
-  );
   if (loading) return <Loading />;
   if (loadError)
     return (
@@ -197,9 +154,15 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
         <h1>
           {t(editing ? 'edit' : 'add')} {t(config.singular)}
         </h1>
-        <Link to={'/' + resource}>{t('back')}</Link>
+        <Link
+          to={
+            resource === 'students' && id ? `/students/${id}` : '/' + resource
+          }
+        >
+          {t('back')}
+        </Link>
       </div>
-      <div className={resource === 'students' ? 'details-grid' : ''}>
+      <div>
         <form className='card' onSubmit={handleSubmit(submit)} noValidate>
           {resource === 'teachers' && (
             <div className='file-field'>
@@ -340,7 +303,11 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
               disabled={formState.isSubmitting}
               onClick={() => {
                 if (!formState.isDirty || window.confirm(t('unsaved')))
-                  nav('/' + resource);
+                  nav(
+                    resource === 'students' && id
+                      ? `/students/${id}`
+                      : '/' + resource,
+                  );
               }}
             >
               {t('cancel')}
@@ -350,66 +317,6 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
             </Button>
           </div>
         </form>
-        {resource === 'students' && record && (
-          <aside>
-            <div className='card'>
-              <h2>{t('account')}</h2>
-              {[
-                ['academicNumber', record.academicNumber],
-                ['status', t(record.user.status)],
-                ['categoryIds', localized(record.category, locale)],
-                [
-                  'programId',
-                  localized(
-                    selectedMembership?.group?.program ?? record.program,
-                    locale,
-                  ),
-                ],
-                [
-                  'riwayaId',
-                  localized(
-                    selectedMembership?.group?.riwaya ?? record.riwaya,
-                    locale,
-                  ),
-                ],
-                [
-                  'languageCode',
-                  t(
-                    selectedMembership?.group?.languageCode ??
-                      record.languageCode,
-                  ),
-                ],
-              ].map(([key, value]) => (
-                <div className='detail-line' key={key}>
-                  <strong>{t(key)}</strong>
-                  <span>{value}</span>
-                </div>
-              ))}
-              <div className='detail-line'>
-                <strong>{t('groupId')}</strong>
-                {groupOptions.length ? (
-                  <select
-                    aria-label={t('groupId')}
-                    value={selectedGroupId}
-                    onChange={(e) => setSelectedGroupId(e.target.value)}
-                  >
-                    {groupOptions.map((m: RecordData) => (
-                      <option key={m.groupId} value={m.groupId}>
-                        {localized(m.group, locale)}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <span>—</span>
-                )}
-              </div>
-            </div>
-            <div className='card'>
-              <h2>{t('statistics')}</h2>
-              {/* unchanged */}
-            </div>
-          </aside>
-        )}
       </div>
     </>
   );

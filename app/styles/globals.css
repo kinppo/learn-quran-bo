@@ -834,6 +834,60 @@ input[type='checkbox'] {
 .detail-line span {
   color: #607575;
 }
+.student-detail-sections {
+  display: grid;
+  gap: 22px;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.section-title h2 {
+  margin: 0;
+}
+.read-only-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+}
+.academic-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.sub-card {
+  padding: 18px;
+  border: 1px solid #e4ecec;
+  border-radius: 12px;
+  background: #fbfdfd;
+}
+.sub-card h3,
+.sub-card h4 {
+  margin-top: 0;
+}
+.sub-card h4 {
+  margin-top: 20px;
+  margin-bottom: 0;
+  color: #607575;
+}
+.group-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+@media (max-width: 700px) {
+  .read-only-details,
+  .academic-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 .profile-photo {
   width: 90px;
   height: 90px;
@@ -851,6 +905,22 @@ dialog {
 }
 dialog::backdrop {
   background: #0005;
+}
+.decline-dialog {
+  overflow: hidden;
+}
+.decline-dialog .field {
+  width: 100%;
+}
+.decline-dialog textarea {
+  display: block;
+  min-height: 130px;
+  resize: vertical;
+}
+.decline-dialog .actions {
+  clear: both;
+  justify-content: flex-end;
+  margin-top: 22px;
 }
 .skip-link {
   position: absolute;

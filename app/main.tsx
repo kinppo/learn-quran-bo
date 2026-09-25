@@ -14,6 +14,7 @@ const pages: Record<string, ComponentType> = {
   'waiting-list': lazy(() => import('@/(pages)/waiting-list/page')),
   support: lazy(() => import('@/(pages)/support/page')),
   'support/detail': lazy(() => import('@/(pages)/support/detail/page')),
+  'students/detail': lazy(() => import('@/(pages)/students/detail/page')),
   'students/edit': lazy(() => import('@/(pages)/students/edit/page')),
   teachers: lazy(() => import('@/(pages)/teachers/page')),
   'teachers/add': lazy(() => import('@/(pages)/teachers/add/page')),
@@ -76,6 +77,10 @@ function App() {
               <Route
                 path='/support/:id'
                 element={<Page path='support/detail' />}
+              />
+              <Route
+                path='/students/:id'
+                element={<Page path='students/detail' />}
               />
               {(Object.keys(resources) as ResourceKey[]).map((key) => (
                 <Route key={key}>

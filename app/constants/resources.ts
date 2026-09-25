@@ -267,14 +267,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: 'professionOther' },
       { name: 'studyLevelId', source: 'study-levels' },
     ],
-    columns: [
-      'academicNumber',
-      'name',
-      'email',
-      'programId',
-      'status',
-      'createdAt',
-    ],
+    columns: ['academicNumber', 'name', 'email', 'status', 'createdAt'],
     defaults: personDefaults,
     schema: () =>
       profileSchema(true)
