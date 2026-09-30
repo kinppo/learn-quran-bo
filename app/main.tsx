@@ -22,6 +22,7 @@ const pages: Record<string, ComponentType> = {
   auditors: lazy(() => import('@/(pages)/auditors/page')),
   'auditors/add': lazy(() => import('@/(pages)/auditors/add/page')),
   'auditors/edit': lazy(() => import('@/(pages)/auditors/edit/page')),
+  'groups/detail': lazy(() => import('@/(pages)/groups/detail/page')),
   groups: lazy(() => import('@/(pages)/groups/page')),
   'groups/messages': lazy(() => import('@/(pages)/groups/messages/page')),
   'groups/add': lazy(() => import('@/(pages)/groups/add/page')),
@@ -67,6 +68,10 @@ function App() {
               <Route
                 path='/waiting-list'
                 element={<Page path='waiting-list' />}
+              />
+              <Route
+                path='/groups/:id'
+                element={<Page path='groups/detail' />}
               />
               <Route path='/support' element={<Page path='support' />} />
               <Route path='/profile' element={<Page path='profile' />} />

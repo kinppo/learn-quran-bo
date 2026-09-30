@@ -93,6 +93,7 @@ export default function WaitingListPage() {
           (availableGroups.response?.data || []).filter(
             (group) =>
               group.active &&
+              !group.endedAt &&
               group.leftPlaces > 0 &&
               group.programId === request.programId &&
               group.riwayaId === request.riwayaId &&

@@ -11,6 +11,7 @@ import ResourceTable, { cellValue } from '@/components/Tables/ResourceTable';
 import Button from '@/components/Buttons/Button';
 import Loading from '@/components/Loaders/Loading';
 import Confirm from '@/components/Popup/Confirm';
+import EndGroup from '@/components/Popup/EndGroup';
 export default function ResourceList({ resource }: { resource: ResourceKey }) {
   const t = useTranslations();
   const { locale } = useLanguage();
@@ -19,6 +20,7 @@ export default function ResourceList({ resource }: { resource: ResourceKey }) {
   const [revision, setRevision] = useState(0);
   const [selection, setSelection] = useState<Record<string, boolean>>({});
   const [deleting, setDeleting] = useState<string[]>([]);
+  const [endingGroup, setEndingGroup] = useState<RecordData>();
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [filterOptions, setFilterOptions] = useState<
@@ -273,6 +275,20 @@ export default function ResourceList({ resource }: { resource: ResourceKey }) {
             </div>
           </details>
         )}
+        {resource === 'groups' && (
+          <label>
+            {t('completionState')}
+            <select
+              aria-label={t('completionState')}
+              value={params.get('completionState') || ''}
+              onChange={(e) => change('completionState', e.target.value)}
+            >
+              <option value=''>{t('all')}</option>
+              <option value='ACTIVE'>{t('ACTIVE')}</option>
+              <option value='ENDED'>{t('ended')}</option>
+            </select>
+          </label>
+        )}
         <div className='toolbar'>
           <label>
             {t('order')}{' '}
@@ -307,6 +323,7 @@ export default function ResourceList({ resource }: { resource: ResourceKey }) {
             selection={selection}
             setSelection={setSelection}
             onDelete={remove}
+            onEndGroup={setEndingGroup}
           />
         )}
         <div className='pagination'>
@@ -364,6 +381,17 @@ export default function ResourceList({ resource }: { resource: ResourceKey }) {
                 setRevision((n) => n + 1);
               })
               .finally(() => setBusy(false));
+          }}
+        />
+      )}
+      {endingGroup && (
+        <EndGroup
+          group={endingGroup}
+          onClose={() => setEndingGroup(undefined)}
+          onEnded={() => {
+            setEndingGroup(undefined);
+            setNotice('saved');
+            setRevision((n) => n + 1);
           }}
         />
       )}

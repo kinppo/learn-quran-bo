@@ -1,4 +1,12 @@
-import { useMemo } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
+import { createPortal } from 'react-dom';
 import {
   flexRender,
   getCoreRowModel,
@@ -7,6 +15,7 @@ import {
   type RowSelectionState,
 } from '@tanstack/react-table';
 import { Link } from 'react-router-dom';
+import { FiMoreVertical } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useLanguage, useTranslations } from '@/i18n';
 import { resources, type ResourceKey } from '@/constants/resources';
@@ -17,6 +26,7 @@ import {
   distinctPrograms,
 } from '@/utils';
 import DisplayDropdown from '@/components/Dropdown/DisplayDropdown';
+import Button from '@/components/Buttons/Button';
 import type { RecordData } from '@/types';
 export function cellValue(
   row: RecordData,
@@ -47,12 +57,14 @@ export default function ResourceTable({
   selection,
   setSelection,
   onDelete: _onDelete,
+  onEndGroup,
 }: {
   resource: ResourceKey;
   rows: RecordData[];
   selection: RowSelectionState;
   setSelection: React.Dispatch<React.SetStateAction<RowSelectionState>>;
   onDelete: (ids: string[]) => void;
+  onEndGroup?: (group: RecordData) => void;
 }) {
   const { locale } = useLanguage();
   const t = useTranslations();
@@ -73,6 +85,7 @@ export default function ResourceTable({
           <input
             type='checkbox'
             aria-label={t('selectRow')}
+            disabled={!!row.original.endedAt}
             checked={row.getIsSelected()}
             onChange={row.getToggleSelectedHandler()}
           />
@@ -98,9 +111,13 @@ export default function ResourceTable({
               <Link
                 className='row-link'
                 to={
-                  resource === 'students'
-                    ? `/students/${recordId(row.original)}`
-                    : `/edit-${config.singular}/${recordId(row.original)}`
+                  resource === 'groups'
+                    ? row.original.endedAt
+                      ? `/groups/${recordId(row.original)}`
+                      : `/edit-group/${recordId(row.original)}`
+                    : resource === 'students'
+                      ? `/students/${recordId(row.original)}`
+                      : `/edit-${config.singular}/${recordId(row.original)}`
                 }
               >
                 {String(value)}
@@ -124,43 +141,33 @@ export default function ResourceTable({
       {
         id: 'actions',
         header: t('actions'),
-        cell: ({ row }) => (
-          <div className='actions'>
-            {resource === 'groups' && (
+        cell: ({ row }) =>
+          resource === 'groups' ? (
+            <GroupActions group={row.original} onEndGroup={onEndGroup} />
+          ) : (
+            <div className='actions'>
               <Link
                 className='button button-outline'
-                to={`/groups/${recordId(row.original)}/messages`}
+                to={
+                  resource === 'students'
+                    ? `/${resource}/${recordId(row.original)}`
+                    : `/edit-${config.singular}/${recordId(row.original)}`
+                }
               >
-                {t('messages')}
+                {t(resource === 'students' ? 'view' : 'edit')}
               </Link>
-            )}
-            <Link
-              className='button button-outline'
-              to={
-                resource === 'students'
-                  ? `/students/${recordId(row.original)}`
-                  : `/edit-${config.singular}/${recordId(row.original)}`
-              }
-            >
-              {t(resource === 'students' ? 'view' : 'edit')}
-            </Link>
-            {/* <Button */}
-            {/*   variant='ghost' */}
-            {/*   onClick={() => onDelete([recordId(row.original)])} */}
-            {/* > */}
-            {/*   {t('delete')} */}
-            {/* </Button> */}
-          </div>
-        ),
+            </div>
+          ),
       },
     ],
-    [config, locale, resource, t],
+    [config, locale, onEndGroup, resource, t],
   );
   const table = useReactTable({
     data: rows,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: recordId,
+    enableRowSelection: (row) => !row.original.endedAt,
     state: { rowSelection: selection },
     onRowSelectionChange: setSelection,
   });
@@ -192,5 +199,109 @@ export default function ResourceTable({
       </table>
       {!rows.length && <p className='empty'>{t('empty')}</p>}
     </div>
+  );
+}
+
+function GroupActions({
+  group,
+  onEndGroup,
+}: {
+  group: RecordData;
+  onEndGroup?: (group: RecordData) => void;
+}) {
+  const t = useTranslations();
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<CSSProperties>();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const place = useCallback(() => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const left = Math.min(
+      Math.max(8, rect.right - 170),
+      Math.max(8, window.innerWidth - 178),
+    );
+    const roomBelow = window.innerHeight - rect.bottom;
+    setPosition(
+      roomBelow >= 220 || roomBelow >= rect.top
+        ? { top: rect.bottom + 4, left }
+        : { bottom: window.innerHeight - rect.top + 4, left },
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent) => {
+      if (
+        !triggerRef.current?.contains(event.target as Node) &&
+        !menuRef.current?.contains(event.target as Node)
+      )
+        setOpen(false);
+    };
+    place();
+    document.addEventListener('mousedown', close);
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [open, place]);
+
+  const id = recordId(group);
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type='button'
+        className='action-menu-trigger'
+        aria-label={t('actions')}
+        aria-haspopup='menu'
+        aria-expanded={open}
+        onClick={() => {
+          if (open) setOpen(false);
+          else {
+            place();
+            setOpen(true);
+          }
+        }}
+      >
+        <FiMoreVertical aria-hidden='true' focusable='false' />
+      </button>
+      {open &&
+        position &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role='menu'
+            className='action-menu-items'
+            style={position}
+            onClick={() => setOpen(false)}
+          >
+            <Link
+              role='menuitem'
+              to={group.endedAt ? `/groups/${id}` : `/edit-group/${id}`}
+            >
+              {t(group.endedAt ? 'view' : 'edit')}
+            </Link>
+            <Link role='menuitem' to={`/groups/${id}/messages`}>
+              {t('messages')}
+            </Link>
+            {!group.endedAt && (
+              <Button
+                role='menuitem'
+                variant='ghost'
+                className='destructive-text'
+                onClick={() => onEndGroup?.(group)}
+              >
+                {t('endGroup')}
+              </Button>
+            )}
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
