@@ -25,6 +25,7 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
   const nav = useNavigate();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [ended, setEnded] = useState(false);
   const [error, setError] = useState('');
   const [revision, setRevision] = useState(0);
   const [lookups, setLookups] = useState<Record<string, RecordData[]>>({});
@@ -59,6 +60,7 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
       .then(async ([lists, result]) => {
         if (!active) return;
         setLookups(Object.fromEntries(lists));
+        setEnded(resource === 'groups' && !!result?.data.endedAt);
         if (result) {
           reset(formValues(resource, result.data));
           if (result.data.user?.avatarId) {
@@ -141,6 +143,7 @@ export default function ResourceForm({ resource }: { resource: ResourceKey }) {
     }
   }
   if (loading) return <Loading />;
+  if (ended) return <p>{t('endHelp')}</p>;
   if (loadError)
     return (
       <div role='alert'>

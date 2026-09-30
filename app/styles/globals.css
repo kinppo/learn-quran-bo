@@ -366,6 +366,59 @@ main {
   background: #e23245;
   color: white;
 }
+.destructive-text {
+  color: var(--color-destructive);
+}
+.action-menu-trigger {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  line-height: 0;
+}
+.action-menu-trigger svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.action-menu-trigger:hover,
+.action-menu-trigger:focus-visible,
+.action-menu-trigger[aria-expanded='true'] {
+  background: #f1f2f6;
+}
+.action-menu-items {
+  position: fixed;
+  z-index: 100;
+  display: grid;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid #dfe0eb;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 12px 30px #0002;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+}
+.action-menu-items a,
+.action-menu-items button {
+  justify-content: flex-start;
+  width: 100%;
+  padding: 9px 10px;
+  min-height: 0;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.action-menu-items a:hover,
+.action-menu-items button:hover {
+  background: #f5f6fa;
+}
 .toolbar,
 .page-title,
 .actions {
@@ -905,6 +958,25 @@ dialog {
 }
 dialog::backdrop {
   background: #0005;
+}
+.end-group-dialog {
+  max-width: 620px;
+}
+.end-group-dialog .dialog-subtitle {
+  color: var(--color-muted);
+}
+.end-group-dialog .actions {
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+.completion-counts {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0;
+}
+.completion-blockers {
+  color: var(--color-destructive);
+  padding-inline-start: 22px;
 }
 .decline-dialog {
   overflow: hidden;
