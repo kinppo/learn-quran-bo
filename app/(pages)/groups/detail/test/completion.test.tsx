@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import GroupDetail from '../page';
 import { messages } from '@/i18n/messages';
 import { GET_FILE } from '@/lib/crud';
@@ -102,37 +108,55 @@ it('disables the group download with an empty passing roster', () => {
   ).toBeInTheDocument();
   expect(screen.getByText(messages.en.downloadAllCertificates)).toBeDisabled();
 });
-it('downloads ready certificates and reports errors that can be retried', async () => {
-  mockEnded = true;
-  const createUrl = jest.fn().mockReturnValue('blob:test');
-  const revokeUrl = jest.fn();
-  Object.defineProperty(URL, 'createObjectURL', {
-    configurable: true,
-    value: createUrl,
-  });
-  Object.defineProperty(URL, 'revokeObjectURL', {
-    configurable: true,
-    value: revokeUrl,
-  });
-  const click = jest
-    .spyOn(HTMLAnchorElement.prototype, 'click')
-    .mockImplementation(() => {});
-  (GET_FILE as jest.Mock)
-    .mockRejectedValueOnce(new Error('network'))
-    .mockResolvedValueOnce(new Blob(['data']));
-  render(<GroupDetail />);
-  await fireEvent.click(screen.getByText(messages.en.downloadAllCertificates));
-  expect(await screen.findByRole('alert')).toHaveTextContent(
-    messages.en.downloadFailed,
-  );
-  await fireEvent.click(screen.getByText(messages.en.downloadAllCertificates));
-  await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
-  expect(createUrl).toHaveBeenCalledTimes(1);
-  await waitFor(() => expect(revokeUrl).toHaveBeenCalledWith('blob:test'), {
-    timeout: 2000,
-  });
-  click.mockRestore();
-});
+it.each([
+  ['downloadCertificate', '/certificates/c/download', 'certificate-c.pdf'],
+  [
+    'downloadAllCertificates',
+    '/certificates/groups/g/download',
+    'group-g-certificates.zip',
+  ],
+] as const)(
+  'downloads %s and reports errors that can be retried',
+  async (label, route, filename) => {
+    mockEnded = true;
+    const createUrl = jest.fn().mockReturnValue('blob:test');
+    const revokeUrl = jest.fn();
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: createUrl,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: revokeUrl,
+    });
+    const click = jest
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function (this: HTMLAnchorElement) {
+        expect(this.download).toBe(filename);
+        expect(this.href).toBe('blob:test');
+      });
+    (GET_FILE as jest.Mock)
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce(new Blob(['data']));
+    render(<GroupDetail />);
+    await act(async () => {
+      fireEvent.click(screen.getByText(messages.en[label]));
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      messages.en.downloadFailed,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByText(messages.en[label]));
+    });
+    await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
+    expect(createUrl).toHaveBeenCalledTimes(1);
+    expect(GET_FILE).toHaveBeenLastCalledWith(route);
+    await waitFor(() => expect(revokeUrl).toHaveBeenCalledWith('blob:test'), {
+      timeout: 2000,
+    });
+    click.mockRestore();
+  },
+);
 it('shows saved roster without edit or end controls', () => {
   mockEnded = true;
   render(<GroupDetail />);
