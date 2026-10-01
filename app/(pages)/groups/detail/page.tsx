@@ -6,7 +6,7 @@ import { localized } from '@/utils';
 import type { RecordData } from '@/types';
 import Button from '@/components/Buttons/Button';
 import Loading from '@/components/Loaders/Loading';
-import { GET, GET_FILE } from '@/lib/crud';
+import { GET_FILE } from '@/lib/crud';
 const percentage = (n: number, d: number) =>
   d ? `${((100 * n) / d).toFixed(1)}%` : '0%';
 export default function GroupDetail() {
@@ -65,24 +65,11 @@ function Results({ id, criteria }: { id: string; criteria: RecordData }) {
   const certificatesReady =
     passingCount > 0 && Number(summary?.readyCount || 0) === passingCount;
   const studentCount = response?.count ?? response?.data.length ?? 0;
-  async function download(
-    route: string,
-    filename: string,
-    key: string,
-    signedPdf = false,
-  ) {
+  async function download(route: string, filename: string, key: string) {
     setDownloading(key);
     setDownloadError(false);
     try {
-      let blob: Blob;
-      if (signedPdf) {
-        const result = await GET<{ url: string }>(route);
-        const response = await fetch(result.data.url);
-        if (!response.ok) throw new Error('Certificate download failed');
-        blob = await response.blob();
-      } else {
-        blob = await GET_FILE(route);
-      }
+      const blob = await GET_FILE(route);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -145,7 +132,9 @@ function Results({ id, criteria }: { id: string; criteria: RecordData }) {
           <span className='completion-stat-value'>
             {Number(summary?.readyCount || 0)}
           </span>
-          <span className='completion-stat-label'>{t('certificatesReady')}</span>
+          <span className='completion-stat-label'>
+            {t('certificatesReady')}
+          </span>
         </div>
       </div>
       {passingCount === 0 ? (
@@ -201,7 +190,6 @@ function Results({ id, criteria }: { id: string; criteria: RecordData }) {
                           `/certificates/${row.certificate.id}/download`,
                           `certificate-${row.certificate.id}.pdf`,
                           row.certificate.id,
-                          true,
                         )
                       }
                     >
