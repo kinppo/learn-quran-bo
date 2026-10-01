@@ -6,6 +6,7 @@ import { localized } from '@/utils';
 import type { RecordData } from '@/types';
 import Button from '@/components/Buttons/Button';
 import Loading from '@/components/Loaders/Loading';
+import { GET, GET_FILE } from '@/lib/crud';
 const percentage = (n: number, d: number) =>
   d ? `${((100 * n) / d).toFixed(1)}%` : '0%';
 export default function GroupDetail() {
@@ -24,22 +25,29 @@ export default function GroupDetail() {
     );
   const row = group.response.data;
   return (
-    <section className='card'>
-      <h1>{localized(row, locale)}</h1>
-      <p>{localized(row.program, locale)}</p>
-      {row.endedAt ? (
-        <>
-          <p>
-            {t('ended')} · {row.endedAt.slice(0, 10)}
-          </p>
-          <Results id={id!} criteria={row} />
-        </>
-      ) : (
-        <Link className='button button-outline' to={`/edit-group/${id}`}>
-          {t('edit')}
-        </Link>
-      )}
-    </section>
+    <div className='group-detail-page'>
+      <section className='group-detail-hero'>
+        <div className='group-detail-heading'>
+          <span className='group-detail-kicker'>
+            {t(row.endedAt ? 'completionResults' : 'groupDetails')}
+          </span>
+          <h1>{localized(row, locale)}</h1>
+          <p>{localized(row.program, locale)}</p>
+        </div>
+        {row.endedAt ? (
+          <span className='group-ended-badge'>
+            <span className='group-ended-dot' />
+            {t('ended')} <span aria-hidden='true'>·</span>{' '}
+            {row.endedAt.slice(0, 10)}
+          </span>
+        ) : (
+          <Link className='button button-outline' to={`/edit-group/${id}`}>
+            {t('edit')}
+          </Link>
+        )}
+      </section>
+      {row.endedAt && <Results id={id!} criteria={row} />}
+    </div>
   );
 }
 function Results({ id, criteria }: { id: string; criteria: RecordData }) {
@@ -50,6 +58,45 @@ function Results({ id, criteria }: { id: string; criteria: RecordData }) {
     `/groups/${id}/results?page=${page}&limit=20`,
     revision,
   );
+  const [downloading, setDownloading] = useState<string>();
+  const [downloadError, setDownloadError] = useState(false);
+  const summary = response?.certificateSummary;
+  const passingCount = Number(summary?.passingCount || 0);
+  const certificatesReady =
+    passingCount > 0 && Number(summary?.readyCount || 0) === passingCount;
+  const studentCount = response?.count ?? response?.data.length ?? 0;
+  async function download(
+    route: string,
+    filename: string,
+    key: string,
+    signedPdf = false,
+  ) {
+    setDownloading(key);
+    setDownloadError(false);
+    try {
+      let blob: Blob;
+      if (signedPdf) {
+        const result = await GET<{ url: string }>(route);
+        const response = await fetch(result.data.url);
+        if (!response.ok) throw new Error('Certificate download failed');
+        blob = await response.blob();
+      } else {
+        blob = await GET_FILE(route);
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setDownloadError(true);
+    } finally {
+      setDownloading(undefined);
+    }
+  }
   if (loading) return <Loading />;
   if (error)
     return (
@@ -59,13 +106,63 @@ function Results({ id, criteria }: { id: string; criteria: RecordData }) {
       </>
     );
   return (
-    <section>
-      <h2>{t('completionResults')}</h2>
-      <p>
-        {t('minAttendancePercent')}: {criteria.minAttendancePercent}% ·{' '}
-        {t('minSatisfactoryPercent')}: {criteria.minSatisfactoryPercent}%
-      </p>
-      <div className='table-wrap'>
+    <section className='completion-panel'>
+      <div className='completion-panel-header'>
+        <div>
+          <span className='group-detail-kicker'>{t('ended')}</span>
+          <h2>{t('completionResults')}</h2>
+          <p className='completion-criteria'>
+            {t('minAttendancePercent')}: {criteria.minAttendancePercent}%
+            <span aria-hidden='true'> · </span>
+            {t('minSatisfactoryPercent')}: {criteria.minSatisfactoryPercent}%
+          </p>
+        </div>
+        <Button
+          disabled={!certificatesReady || !!downloading}
+          onClick={() =>
+            void download(
+              `/certificates/groups/${id}/download`,
+              `group-${id}-certificates.zip`,
+              'group',
+            )
+          }
+        >
+          {downloading === 'group'
+            ? t('downloading')
+            : t('downloadAllCertificates')}
+        </Button>
+      </div>
+      <div className='completion-stats' aria-label={t('completionResults')}>
+        <div className='completion-stat'>
+          <span className='completion-stat-value'>{studentCount}</span>
+          <span className='completion-stat-label'>{t('students')}</span>
+        </div>
+        <div className='completion-stat completion-stat-passed'>
+          <span className='completion-stat-value'>{passingCount}</span>
+          <span className='completion-stat-label'>{t('passed')}</span>
+        </div>
+        <div className='completion-stat completion-stat-certificates'>
+          <span className='completion-stat-value'>
+            {Number(summary?.readyCount || 0)}
+          </span>
+          <span className='completion-stat-label'>{t('certificatesReady')}</span>
+        </div>
+      </div>
+      {passingCount === 0 ? (
+        <p className='completion-notice'>{t('noPassingCertificates')}</p>
+      ) : !certificatesReady ? (
+        <p className='completion-notice'>{t('certificatesPreparing')}</p>
+      ) : null}
+      {downloadError && (
+        <p role='alert' className='completion-notice error'>
+          {t('downloadFailed')}
+        </p>
+      )}
+      <div className='completion-roster-heading'>
+        <h3>{t('students')}</h3>
+        <span>{studentCount}</span>
+      </div>
+      <div className='table-wrap completion-table-wrap'>
         <table>
           <thead>
             <tr>
@@ -73,13 +170,20 @@ function Results({ id, criteria }: { id: string; criteria: RecordData }) {
               <th>{t('status')}</th>
               <th>{t('attendanceResult')}</th>
               <th>{t('performanceResult')}</th>
+              <th>{t('actions')}</th>
             </tr>
           </thead>
           <tbody>
             {response?.data.map((row) => (
               <tr key={row.id}>
                 <td>{row.studentName}</td>
-                <td>{t(row.passed ? 'passed' : 'notPassed')}</td>
+                <td>
+                  <span
+                    className={`completion-status-pill ${row.passed ? 'is-passed' : 'is-failed'}`}
+                  >
+                    {t(row.passed ? 'passed' : 'notPassed')}
+                  </span>
+                </td>
                 <td>
                   {row.presentCount}/{row.applicableCount} ·{' '}
                   {percentage(row.presentCount, row.applicableCount)}
@@ -87,6 +191,29 @@ function Results({ id, criteria }: { id: string; criteria: RecordData }) {
                 <td>
                   {row.satisfactoryCount}/{row.presentCount} ·{' '}
                   {percentage(row.satisfactoryCount, row.presentCount)}
+                </td>
+                <td>
+                  {row.passed && row.certificate?.status === 'READY' ? (
+                    <Button
+                      disabled={!!downloading}
+                      onClick={() =>
+                        void download(
+                          `/certificates/${row.certificate.id}/download`,
+                          `certificate-${row.certificate.id}.pdf`,
+                          row.certificate.id,
+                          true,
+                        )
+                      }
+                    >
+                      {downloading === row.certificate.id
+                        ? t('downloading')
+                        : t('downloadCertificate')}
+                    </Button>
+                  ) : row.passed ? (
+                    <Button disabled>
+                      {t('certificateDownloadPreparing')}
+                    </Button>
+                  ) : null}
                 </td>
               </tr>
             ))}

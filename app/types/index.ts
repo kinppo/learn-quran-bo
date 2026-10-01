@@ -14,6 +14,7 @@ export interface ApiResponse<T> {
   success: boolean;
   data: T;
   count?: number;
+  certificateSummary?: { passingCount: number; readyCount: number };
 }
 export type RecordData = Record<string, any>;
 export interface Option {
