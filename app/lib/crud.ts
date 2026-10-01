@@ -58,7 +58,32 @@ async function sendRequest<T>(
     );
   return body;
 }
+async function sendFileRequest(route: string, retry = true): Promise<Blob> {
+  const response = await fetch(`${API_URL}${route}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  if (
+    response.status === 401 &&
+    !route.startsWith('/auth/login') &&
+    !route.startsWith('/auth/logout')
+  ) {
+    if (retry && (await refresh())) return sendFileRequest(route, false);
+    window.dispatchEvent(new Event('khiarukum:unauthorized'));
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(
+      response.status,
+      Array.isArray(body?.error?.message)
+        ? body.error.message.join(' · ')
+        : body?.error?.message || 'Request failed',
+    );
+  }
+  return response.blob();
+}
 export const GET = <T = any>(route: string) => sendRequest<T>(route, 'GET');
+export const GET_FILE = (route: string) => sendFileRequest(route);
 export const POST = <T = any>(route: string, data?: unknown) =>
   sendRequest<T>(route, 'POST', data);
 export const PATCH = <T = any>(route: string, data: unknown) =>
